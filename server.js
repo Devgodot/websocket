@@ -11,12 +11,14 @@ class Lobby {
     this.players.push(ws);
     this.broadcast({ message: 'join', id: `${ws.id}` });
     this.broadcastLobbyLength();
+    this.broadcastPlayerIds();
   }
 
   removePlayer(ws) {
     this.players = this.players.filter(player => player !== ws);
     this.broadcast({ message: 'left', id: `${ws.id}` });
     this.broadcastLobbyLength();
+    this.broadcastPlayerIds();
   }
 
   broadcast(data) {
@@ -25,7 +27,11 @@ class Lobby {
       player.send(message);
     });
   }
-
+  broadcastPlayerIds() {
+    const playerIds = this.players.map(player => player.id);
+    const data = { type: 'playerIds', ids: playerIds };
+    this.broadcast(data);
+  }
   broadcastLobbyLength() {
     const data = { type: 'lobbyLength', length: this.players.length };
     this.broadcast(data);
