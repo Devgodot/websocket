@@ -8,13 +8,13 @@ class Lobby {
 
   addPlayer(ws) {
     this.players.push(ws);
-    this.broadcast({ type: 'message', id: `${ws.id}` });
+    this.broadcast({ message: 'join', id: `${ws.id}` });
     this.broadcastLobbyLength();
   }
 
   removePlayer(ws) {
     this.players = this.players.filter(player => player !== ws);
-    this.broadcast({ type: 'message', id: `${ws.id}` });
+    this.broadcast({ message: 'left', id: `${ws.id}` });
     this.broadcastLobbyLength();
   }
 
