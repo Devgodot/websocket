@@ -65,7 +65,7 @@ wss.on('connection', function connection(ws) {
 
   ws.on('message', function incoming(message) {
     console.log('Received: %s', message);
-    lobby.broadcast({ type: 'message', content: `${ws.id}: ${message}` });
+    lobby.broadcast({ type: 'data', data: `${message}`, id: `${ws.id}`});
   });
 
   ws.on('error', function(error) {
