@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <script>
+    const ws = new WebSocket('ws://localhost:8080');
+
+    ws.onopen = function() {
+      console.log('اتصال برقرار شد.');
+      ws.send('سلام سرور!');
+    };
+
+    ws.onmessage = function(event) {
+      console.log('پیام از سرور: ' + event.data);
+    };
+
+    ws.onclose = function() {
+      console.log('اتصال قطع شد.');
+    };
+  </script>
+</body>
+</html>
