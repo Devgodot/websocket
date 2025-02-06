@@ -8,27 +8,26 @@ class Lobby {
 
   addPlayer(ws) {
     this.players.push(ws);
-    this.broadcast(`${ws.id} joined the lobby.`);
+    this.broadcast({ type: 'message', content: `${ws.id} joined the lobby.` });
     this.broadcastLobbyLength();
   }
 
   removePlayer(ws) {
     this.players = this.players.filter(player => player !== ws);
-    this.broadcast(`${ws.id} left the lobby.`);
+    this.broadcast({ type: 'message', content: `${ws.id} left the lobby.` });
     this.broadcastLobbyLength();
   }
 
-  broadcast(message) {
+  broadcast(data) {
+    const message = JSON.stringify(data);
     this.players.forEach(player => {
       player.send(message);
     });
   }
 
   broadcastLobbyLength() {
-    const message = `Current lobby length: ${this.players.length}`;
-    this.players.forEach(player => {
-      player.send(message);
-    });
+    const data = { type: 'lobbyLength', length: this.players.length };
+    this.broadcast(data);
   }
 }
 
@@ -59,7 +58,7 @@ wss.on('connection', function connection(ws) {
 
   ws.on('message', function incoming(message) {
     console.log('Received: %s', message);
-    lobby.broadcast(`${ws.id}: ${message}`);
+    lobby.broadcast({ type: 'message', content: `${ws.id}: ${message}` });
   });
 
   ws.on('error', function(error) {
