@@ -9,14 +9,23 @@ class Lobby {
   addPlayer(ws) {
     this.players.push(ws);
     this.broadcast(`${ws.id} joined the lobby.`);
+    this.broadcastLobbyLength();
   }
 
   removePlayer(ws) {
     this.players = this.players.filter(player => player !== ws);
     this.broadcast(`${ws.id} left the lobby.`);
+    this.broadcastLobbyLength();
   }
 
   broadcast(message) {
+    this.players.forEach(player => {
+      player.send(message);
+    });
+  }
+
+  broadcastLobbyLength() {
+    const message = `Current lobby length: ${this.players.length}`;
     this.players.forEach(player => {
       player.send(message);
     });
@@ -40,7 +49,7 @@ class LobbyManager {
 }
 
 const wss = new WebSocket.Server({ port: 8080 });
-const lobbyManager = new LobbyManager(10); // Set max players per lobby to 5
+const lobbyManager = new LobbyManager(5); // Set max players per lobby to 5
 
 wss.on('connection', function connection(ws) {
   const lobby = lobbyManager.getAvailableLobby();
