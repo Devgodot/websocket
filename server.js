@@ -1,4 +1,5 @@
 const WebSocket = require('ws');
+const { v4: uuidv4 } = require('uuid');
 
 class Lobby {
   constructor(id) {
@@ -52,7 +53,7 @@ const lobbyManager = new LobbyManager(5); // Set max players per lobby to 5
 
 wss.on('connection', function connection(ws) {
   const lobby = lobbyManager.getAvailableLobby();
-  ws.id = `Player${lobby.players.length + 1}`;
+  ws.id = uuidv4(); // Generate a unique ID for the player
   console.log(`${ws.id} connected to Lobby ${lobby.id}.`);
   lobby.addPlayer(ws);
 
