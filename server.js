@@ -1,23 +1,66 @@
 const WebSocket = require('ws');
 
-// ایجاد سرور وب‌سوکت روی پورت 8080
+class Lobby {
+  constructor(id) {
+    this.id = id;
+    this.players = [];
+  }
+
+  addPlayer(ws) {
+    this.players.push(ws);
+    this.broadcast(`${ws.id} joined the lobby.`);
+  }
+
+  removePlayer(ws) {
+    this.players = this.players.filter(player => player !== ws);
+    this.broadcast(`${ws.id} left the lobby.`);
+  }
+
+  broadcast(message) {
+    this.players.forEach(player => {
+      player.send(message);
+    });
+  }
+}
+
+class LobbyManager {
+  constructor(maxPlayersPerLobby) {
+    this.maxPlayersPerLobby = maxPlayersPerLobby;
+    this.lobbies = [];
+  }
+
+  getAvailableLobby() {
+    let lobby = this.lobbies.find(lobby => lobby.players.length < this.maxPlayersPerLobby);
+    if (!lobby) {
+      lobby = new Lobby(this.lobbies.length + 1);
+      this.lobbies.push(lobby);
+    }
+    return lobby;
+  }
+}
+
 const wss = new WebSocket.Server({ port: 8080 });
+const lobbyManager = new LobbyManager(10); // Set max players per lobby to 5
 
 wss.on('connection', function connection(ws) {
-  console.log('یک کلاینت جدید متصل شد.');
+  const lobby = lobbyManager.getAvailableLobby();
+  ws.id = `Player${lobby.players.length + 1}`;
+  console.log(`${ws.id} connected to Lobby ${lobby.id}.`);
+  lobby.addPlayer(ws);
 
   ws.on('message', function incoming(message) {
-    console.log('دریافت شده: %s', message);
+    console.log('Received: %s', message);
+    lobby.broadcast(`${ws.id}: ${message}`);
+  });
 
-    // ارسال پاسخ به کلاینت
-    ws.send(`سرور دریافت کرد: ${message}`);
-  });
   ws.on('error', function(error) {
-    console.error('خطا در اتصال:', error);
+    console.error('Connection error:', error);
   });
+
   ws.on('close', function close() {
-    console.log('کلاینت قطع شد.');
+    console.log(`${ws.id} disconnected from Lobby ${lobby.id}.`);
+    lobby.removePlayer(ws);
   });
 });
 
-console.log('سرور وب‌سوکت روی پورت 8080 اجرا شد.');
+console.log('WebSocket server is running on port 8080.');
