@@ -14,10 +14,10 @@ class Lobby {
   addPlayer(ws, reconnecting = false) {
     if (this.players.length < this.maxPlayers || reconnecting) {
       ws.disconnected = false;
-if (!reconnecting) {
-      this.players.push(ws);
-      this.playerData.set(ws.id, { position: { x: 0, y: 0 }, rotation: 0, health: 100 }); // Initialize player data
-}
+      if (!reconnecting) {
+        this.players.push(ws);
+        this.playerData.set(ws.id, { position: { x: 0, y: 0 }, rotation: 0, health: 100 }); // Initialize player data
+      }
       this.broadcast({ message: 'join', id: `${ws.id}` });
       this.broadcastLobbyLength();
       this.broadcastPlayerIds();
@@ -76,6 +76,7 @@ if (!reconnecting) {
     // Generate a list of unique random numbers within the range of 0 to maxPlayers
     const uniqueNumbers = Array.from({ length: 10 }, (_, i) => i);
     uniqueNumbers.sort(() => Math.random() - 0.5); // Shuffle the array
+
     // Assign each player a unique number and send it to them
     this.players.forEach((player, index) => {
       const assignedNumber = uniqueNumbers;
@@ -133,7 +134,7 @@ class LobbyManager {
   assignPlayerToLobby(ws, lobby, reconnecting = false) {
     ws.lobbyId = lobby.id;
     this.playerLobbies.set(ws.id, lobby.id);
-        lobby.addPlayer(ws, reconnecting);
+    lobby.addPlayer(ws, reconnecting);
     ws.send(JSON.stringify({ type: 'lobbyId', id: lobby.id })); // Send lobby ID to the player
 
     // Send all player data to the reconnecting player
@@ -178,7 +179,7 @@ class LobbyManager {
         this.assignPlayerToLobby(ws, lobby, true); // Pass true to indicate reconnection
         this.disconnectedPlayers.delete(ws.id); // Remove from disconnected players
       }
-    } 
+        }
   }
 }
 
@@ -192,7 +193,7 @@ wss.on('connection', function connection(ws) {
     const data = JSON.parse(message);
     if (data.type === 'setId') {
       ws.id = data.id;
-       // Handle reconnection
+      // Handle reconnection
       lobbyManager.handleReconnection(ws);
     } else if (data.type === 'setLobbySize') {
       let lobby = lobbyManager.getNonActiveLobbyBySize(data.size);
