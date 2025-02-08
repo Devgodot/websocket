@@ -128,15 +128,17 @@ class LobbyManager {
     return this.lobbies.find(lobby => lobby.id === lobbyId);
   }
 
-  assignPlayerToLobby(ws, lobby) {
+  assignPlayerToLobby(ws, lobby, reconnecting = false) {
     ws.lobbyId = lobby.id;
     this.playerLobbies.set(ws.id, lobby.id);
     lobby.addPlayer(ws);
     ws.send(JSON.stringify({ type: 'lobbyId', id: lobby.id })); // Send lobby ID to the player
 
     // Send all player data to the reconnecting player
-    const allPlayerData = lobby.getAllPlayerData();
-    ws.send(JSON.stringify({ type: 'allPlayerData', data: allPlayerData }));
+    if (reconnecting) {
+      const allPlayerData = lobby.getAllPlayerData();
+      ws.send(JSON.stringify({ type: 'allPlayerData', data: allPlayerData }));
+    }
   }
 
   removePlayerFromLobby(ws) {
@@ -176,7 +178,7 @@ wss.on('connection', function connection(ws) {
     const lobby = lobbyManager.getLobbyById(previousLobbyId);
     if (lobby) {
       console.log(`${ws.id} reconnected to Lobby ${lobby.id}.`);
-      lobbyManager.assignPlayerToLobby(ws, lobby);
+      lobbyManager.assignPlayerToLobby(ws, lobby, true); // Pass true to indicate reconnection
     }
   } else {
     const lobby = lobbyManager.getAvailableLobby();
