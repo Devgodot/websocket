@@ -104,6 +104,7 @@ class LobbyManager {
   constructor() {
     this.lobbies = [];
     this.playerLobbies = new Map(); // Store player lobby information
+    this.disconnectedPlayers = new Map(); // Store disconnected player information
   }
 
   createLobby(maxPlayers) {
@@ -149,6 +150,7 @@ class LobbyManager {
         lobby.removePlayer(ws);
       }
       this.playerLobbies.delete(ws.id);
+      this.disconnectedPlayers.set(ws.id, { lobbyId, playerData: lobby.playerData.get(ws.id) }); // Store disconnected player information
     }
   }
 
@@ -164,6 +166,19 @@ class LobbyManager {
   getNonActiveLobbyBySize(size) {
     return this.lobbies.find(lobby => lobby.maxPlayers === size && !lobby.active);
   }
+
+  handleReconnection(ws) {
+    const disconnectedPlayer = this.disconnectedPlayers.get(ws.id);
+    if (disconnectedPlayer) {
+      const lobby = this.getLobbyById(disconnectedPlayer.lobbyId);
+      if (lobby) {
+        console.log(`${ws.id} reconnected to Lobby ${lobby.id}.`);
+        lobby.playerData.set(ws.id, disconnectedPlayer.playerData); // Restore player data
+        this.assignPlayerToLobby(ws, lobby, true); // Pass true to indicate reconnection
+        this.disconnectedPlayers.delete(ws.id); // Remove from disconnected players
+      }
+    } 
+  }
 }
 
 const wss = new WebSocket.Server({ port: 8080 });
@@ -173,14 +188,7 @@ wss.on('connection', function connection(ws) {
   ws.id = uuidv4(); // Generate a unique ID for the player
 
   // Handle reconnection
-  const previousLobbyId = lobbyManager.playerLobbies.get(ws.id);
-  if (previousLobbyId) {
-    const lobby = lobbyManager.getLobbyById(previousLobbyId);
-    if (lobby) {
-      console.log(`${ws.id} reconnected to Lobby ${lobby.id}.`);
-      lobbyManager.assignPlayerToLobby(ws, lobby, true); // Pass true to indicate reconnection
-    }}
-  
+  lobbyManager.handleReconnection(ws);
 
   ws.on('message', function incoming(message) {
     const data = JSON.parse(message);
