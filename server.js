@@ -186,12 +186,13 @@ const lobbyManager = new LobbyManager();
 
 wss.on('connection', function connection(ws) {
   ws.id = uuidv4(); // Generate a unique ID for the player
-
-  // Handle reconnection
-  lobbyManager.handleReconnection(ws);
-
   ws.on('message', function incoming(message) {
     const data = JSON.parse(message);
+    if (data.type === 'setId') {
+      ws.id = data.id
+       // Handle reconnection
+      lobbyManager.handleReconnection(ws);
+    }
     if (data.type === 'setLobbySize') {
       let lobby = lobbyManager.getNonActiveLobbyBySize(data.size);
       if (lobby) {
