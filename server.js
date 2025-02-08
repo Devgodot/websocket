@@ -8,14 +8,14 @@ class Lobby {
     this.maxPlayers = maxPlayers;
     this.active = false;
     this.lobbyManager = lobbyManager; // Reference to the LobbyManager
-this.playerData = new Map(); // Store player information
+    this.playerData = new Map(); // Store player information
   }
 
   addPlayer(ws) {
     if (this.players.length < this.maxPlayers) {
       ws.disconnected = false;
       this.players.push(ws);
-this.playerData.set(ws.id, { position: { x: 0, y: 0 }, rotation: 0, health: 100 }); // Initialize player data
+      this.playerData.set(ws.id, { position: { x: 0, y: 0 }, rotation: 0, health: 100 }); // Initialize player data
       this.broadcast({ message: 'join', id: `${ws.id}` });
       this.broadcastLobbyLength();
       this.broadcastPlayerIds();
@@ -33,7 +33,7 @@ this.playerData.set(ws.id, { position: { x: 0, y: 0 }, rotation: 0, health: 100 
       this.broadcast({ message: 'left', id: `${ws.id}` });
     } else {
       this.players = this.players.filter(player => player !== ws);
-this.playerData.delete(ws.id); // Remove player data
+      this.playerData.delete(ws.id); // Remove player data
       this.broadcast({ message: 'left', id: `${ws.id}` });
       this.broadcastLobbyLength();
       this.broadcastPlayerIds();
@@ -80,7 +80,7 @@ this.playerData.delete(ws.id); // Remove player data
       const assignedNumber = uniqueNumbers;
       player.send(JSON.stringify({ type: 'assignedNumber', number: assignedNumber }));
     });
-}
+  }
 
   updatePlayerData(ws, data) {
     if (this.playerData.has(ws.id)) {
@@ -89,6 +89,14 @@ this.playerData.delete(ws.id); // Remove player data
       this.playerData.set(ws.id, playerData);
       this.broadcast({ type: 'updatePlayerData', id: ws.id, data: playerData });
     }
+  }
+
+  getAllPlayerData() {
+    const allPlayerData = [];
+    this.playerData.forEach((data, id) => {
+      allPlayerData.push({ id, data });
+    });
+    return allPlayerData;
   }
 }
 
@@ -125,6 +133,10 @@ class LobbyManager {
     this.playerLobbies.set(ws.id, lobby.id);
     lobby.addPlayer(ws);
     ws.send(JSON.stringify({ type: 'lobbyId', id: lobby.id })); // Send lobby ID to the player
+
+    // Send all player data to the reconnecting player
+    const allPlayerData = lobby.getAllPlayerData();
+    ws.send(JSON.stringify({ type: 'allPlayerData', data: allPlayerData }));
   }
 
   removePlayerFromLobby(ws) {
@@ -191,7 +203,7 @@ wss.on('connection', function connection(ws) {
       }
     } else if (data.type === 'joinLobby') {
       lobbyManager.joinLobbyById(ws, data.lobbyId);
-} else if (data.type === 'updatePlayerData') {
+    } else if (data.type === 'updatePlayerData') {
       const lobby = lobbyManager.getLobbyById(ws.lobbyId);
       if (lobby) {
         lobby.updatePlayerData(ws, data.data);
