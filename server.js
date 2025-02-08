@@ -179,7 +179,7 @@ wss.on('connection', function connection(ws) {
     if (lobby) {
       console.log(`${ws.id} reconnected to Lobby ${lobby.id}.`);
       lobbyManager.assignPlayerToLobby(ws, lobby, true); // Pass true to indicate reconnection
-    }
+    }}
   
 
   ws.on('message', function incoming(message) {
