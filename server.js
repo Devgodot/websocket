@@ -74,7 +74,7 @@ class Lobby {
 
     // Assign each player a unique number and send it to them
     this.players.forEach((player, index) => {
-      const assignedNumber = uniqueNumbers[index];
+      const assignedNumber = uniqueNumbers;
       player.send(JSON.stringify({ type: 'assignedNumber', number: assignedNumber }));
     });
   }
