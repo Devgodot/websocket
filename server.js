@@ -8,12 +8,14 @@ class Lobby {
     this.maxPlayers = maxPlayers;
     this.active = false;
     this.lobbyManager = lobbyManager; // Reference to the LobbyManager
+this.playerData = new Map(); // Store player information
   }
 
   addPlayer(ws) {
     if (this.players.length < this.maxPlayers) {
       ws.disconnected = false;
       this.players.push(ws);
+this.playerData.set(ws.id, { position: { x: 0, y: 0 }, rotation: 0, health: 100 }); // Initialize player data
       this.broadcast({ message: 'join', id: `${ws.id}` });
       this.broadcastLobbyLength();
       this.broadcastPlayerIds();
@@ -31,6 +33,7 @@ class Lobby {
       this.broadcast({ message: 'left', id: `${ws.id}` });
     } else {
       this.players = this.players.filter(player => player !== ws);
+this.playerData.delete(ws.id); // Remove player data
       this.broadcast({ message: 'left', id: `${ws.id}` });
       this.broadcastLobbyLength();
       this.broadcastPlayerIds();
@@ -75,8 +78,17 @@ class Lobby {
     // Assign each player a unique number and send it to them
     this.players.forEach((player, index) => {
       const assignedNumber = uniqueNumbers;
-      player.send(JSON.stringify({ type: 'assignedNumber', number: assignedNumber }));
+      send(JSONify({ type: 'assignedNumber', number: assignedNumber }));
     });
+}
+
+  updatePlayerData(ws, data) {
+    if (this.playerData.has(ws.id)) {
+      const playerData = this.playerData.get(ws.id);
+      Object.assign(playerData, data); // Update player data
+      this.playerData.set(ws.id, playerData);
+      this.broadcast({ type: 'updatePlayerData', id: ws.id, data: playerData });
+    }
   }
 }
 
@@ -146,6 +158,20 @@ const lobbyManager = new LobbyManager();
 wss.on('connection', function connection(ws) {
   ws.id = uuidv4(); // Generate a unique ID for the player
 
+  // Handle reconnection
+  const previousLobbyId = lobbyManager.playerLobbies.get(ws.id);
+  if (previousLobbyId) {
+    const lobby = lobbyManager.getLobbyById(previousLobbyId);
+    if (lobby) {
+      console.log(`${ws.id} reconnected to Lobby ${lobby.id}.`);
+      lobbyManager.assignPlayerToLobby(ws, lobby);
+    }
+  } else {
+    const lobby = lobbyManager.getAvailableLobby();
+    console.log(`${ws.id} connected to Lobby ${lobby.id}.`);
+    lobbyManager.assignPlayerToLobby(ws, lobby);
+  }
+
   ws.on('message', function incoming(message) {
     const data = JSON.parse(message);
     if (data.type === 'setLobbySize') {
@@ -165,6 +191,11 @@ wss.on('connection', function connection(ws) {
       }
     } else if (data.type === 'joinLobby') {
       lobbyManager.joinLobbyById(ws, data.lobbyId);
+} else if (data.type === 'updatePlayerData') {
+      const lobby = lobbyManager.getLobbyById(ws.lobbyId);
+      if (lobby) {
+        lobby.updatePlayerData(ws, data.data);
+      }
     } else {
       const lobby = lobbyManager.getLobbyById(ws.lobbyId);
       if (lobby) {
@@ -182,20 +213,6 @@ wss.on('connection', function connection(ws) {
     console.log(`${ws.id} disconnected from Lobby ${ws.lobbyId}.`);
     lobbyManager.removePlayerFromLobby(ws);
   });
-
-  // Handle reconnection
-  const previousLobbyId = lobbyManager.playerLobbies.get(ws.id);
-  if (previousLobbyId) {
-    const lobby = lobbyManager.getLobbyById(previousLobbyId);
-    if (lobby) {
-      console.log(`${ws.id} reconnected to Lobby ${lobby.id}.`);
-      lobbyManager.assignPlayerToLobby(ws, lobby);
-    }
-  } else {
-    const lobby = lobbyManager.getAvailableLobby();
-    console.log(`${ws.id} connected to Lobby ${lobby.id}.`);
-    lobbyManager.assignPlayerToLobby(ws, lobby);
-  }
 });
 
 console.log('WebSocket server is running on port 8080.');
