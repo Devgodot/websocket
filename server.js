@@ -67,6 +67,16 @@ class Lobby {
     this.active = true;
     this.broadcast({ type: 'lobbyStatus', status: 'active' });
     console.log(`Lobby ${this.id} is now active.`);
+
+    // Generate a list of unique random numbers within the range of 0 to maxPlayers
+    const uniqueNumbers = Array.from({ length: this.maxPlayers }, (_, i) => i);
+    uniqueNumbers.sort(() => Math.random() - 0.5); // Shuffle the array
+
+    // Assign each player a unique number and send it to them
+    this.players.forEach((player, index) => {
+      const assignedNumber = uniqueNumbers[index];
+      player.send(JSON.stringify({ type: 'assignedNumber', number: assignedNumber }));
+    });
   }
 }
 
