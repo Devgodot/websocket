@@ -180,11 +180,7 @@ wss.on('connection', function connection(ws) {
       console.log(`${ws.id} reconnected to Lobby ${lobby.id}.`);
       lobbyManager.assignPlayerToLobby(ws, lobby, true); // Pass true to indicate reconnection
     }
-  } else {
-    const lobby = lobbyManager.getAvailableLobby();
-    console.log(`${ws.id} connected to Lobby ${lobby.id}.`);
-    lobbyManager.assignPlayerToLobby(ws, lobby);
-  }
+  
 
   ws.on('message', function incoming(message) {
     const data = JSON.parse(message);
