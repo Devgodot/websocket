@@ -78,7 +78,7 @@ this.playerData.delete(ws.id); // Remove player data
     // Assign each player a unique number and send it to them
     this.players.forEach((player, index) => {
       const assignedNumber = uniqueNumbers;
-      send(JSONify({ type: 'assignedNumber', number: assignedNumber }));
+      player.send(JSON.stringify({ type: 'assignedNumber', number: assignedNumber }));
     });
 }
 
@@ -99,7 +99,7 @@ class LobbyManager {
   }
 
   createLobby(maxPlayers) {
-    const lobby = new Lobby(this.lobbies.length + 1, maxPlayers, this);
+    const lobby = new Lobby(uuidv4(), maxPlayers, this);
     this.lobbies.push(lobby);
     return lobby;
   }
