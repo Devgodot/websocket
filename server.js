@@ -69,7 +69,7 @@ class Lobby {
     console.log(`Lobby ${this.id} is now active.`);
 
     // Generate a list of unique random numbers within the range of 0 to maxPlayers
-    const uniqueNumbers = Array.from({ length: this.maxPlayers }, (_, i) => i);
+    const uniqueNumbers = Array.from({ length: 10 }, (_, i) => i);
     uniqueNumbers.sort(() => Math.random() - 0.5); // Shuffle the array
 
     // Assign each player a unique number and send it to them
